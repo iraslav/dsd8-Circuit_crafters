@@ -2,10 +2,6 @@
 // testbench, for the pattern Section 8.5 (R24) requires of every
 // module, not just the ALU.
 //
-// This testbench will FAIL against the placeholder alu.v in this
-// template -- that is expected and correct: it means the harness is
-// doing its job. It stops failing once you implement alu.v for real.
-//
 // What makes a testbench "self-checking": it computes the expected
 // result *independently* of the DUT (the `expected_*` functions below
 // are a second, independent statement of Section 2.3's truth table --
@@ -16,12 +12,8 @@
 // "TESTBENCH: PASS" or "TESTBENCH: FAIL" on stdout -- keep that
 // convention in every unit testbench you write for the other modules.
 //
-// This is a small DIRECTED test (one vector per opcode, plus the
-// documented corner-case operands 0x00/0x01/0x7F/0x80/0xFF). It does
-// NOT satisfy R24's "at least 10,000 random operand pairs" requirement
-// by itself -- extend it (or write a second testbench) with a
-// constrained-random loop before you rely on it for your verification
-// report.
+// The test combines directed edge cases with 10,000 constrained-random
+// operand pairs spread across all eight ALU operations.
 
 `timescale 1ns/1ps
 
@@ -34,6 +26,9 @@ module tb_alu_example;
 
     integer errors;
     integer i;
+    integer random_seed;
+    reg [4:0] corner_a_seen;
+    reg [4:0] corner_b_seen;
 
     alu dut (
         .a(a), .b(b), .op(op),
@@ -84,9 +79,11 @@ module tb_alu_example;
         input [7:0] fa, fb;
         input [3:0] fop;
         reg result7, a7;
+        reg [7:0] expected_value;
         begin
             a7 = fa[7];
-            result7 = expected_result(fa, fb, fop)[7];
+            expected_value = expected_result(fa, fb, fop);
+            result7 = expected_value[7];
             case (fop)
                 4'h4:    expected_overflow = (fa[7] == fb[7]) && (result7 != a7);
                 4'h5, 4'hB: expected_overflow = (fa[7] != fb[7]) && (result7 != a7);
@@ -107,6 +104,21 @@ module tb_alu_example;
             exp_c = expected_carry(ta, tb, top);
             exp_v = expected_overflow(ta, tb, top);
 
+            case (ta)
+                8'h00: corner_a_seen[0] = 1'b1;
+                8'h01: corner_a_seen[1] = 1'b1;
+                8'h7F: corner_a_seen[2] = 1'b1;
+                8'h80: corner_a_seen[3] = 1'b1;
+                8'hFF: corner_a_seen[4] = 1'b1;
+            endcase
+            case (tb)
+                8'h00: corner_b_seen[0] = 1'b1;
+                8'h01: corner_b_seen[1] = 1'b1;
+                8'h7F: corner_b_seen[2] = 1'b1;
+                8'h80: corner_b_seen[3] = 1'b1;
+                8'hFF: corner_b_seen[4] = 1'b1;
+            endcase
+
             if (result !== exp_result || flag_z !== exp_z || flag_n !== exp_n
                     || flag_c !== exp_c || flag_v !== exp_v) begin
                 errors = errors + 1;
@@ -119,6 +131,9 @@ module tb_alu_example;
 
     initial begin
         errors = 0;
+        random_seed = 32'h5D8A_2026;
+        corner_a_seen = 5'b00000;
+        corner_b_seen = 5'b00000;
 
         // one directed vector per opcode
         check(8'h05, 8'h03, 4'h4, "ADD");
@@ -142,6 +157,12 @@ module tb_alu_example;
             check(8'h01, a, 4'h5, "SUB corner (b)");
         end
 
+        for (i = 0; i < 10000; i = i + 1) begin
+            check($random(random_seed), $random(random_seed),
+                  4'h4 + (i % 8), "constrained-random");
+        end
+
+        $display("ALU corner coverage A=%05b B=%05b", corner_a_seen, corner_b_seen);
         if (errors == 0) begin
             $display("TESTBENCH: PASS");
         end else begin

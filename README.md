@@ -1,21 +1,19 @@
-# DSD-8 Processor -- starter repository
+# DSD-8 Processor
 
-Base code for the DSD-8 Processor project (Digital System Design). This
-repository is the CI/certification and verification infrastructure the
-project needs -- it is **not** a working processor. Every module under
-`rtl/` is an unimplemented placeholder with the frozen port list from
-Section 5 and a `TODO`; writing the actual RTL is the assignment.
+Verilog implementation of the DSD-8 8-bit Harvard processor described
+in the supplied project specification. The ISA and module interfaces
+are fixed by that specification; the CPU uses a multi-cycle controller
+with fetch, execute, I/O-wait, and halted states.
 
 ## What's here
 
 ```
-rtl/        module skeletons -- frozen ports, no behaviour yet (yours to write)
+rtl/        processor datapath, controller, memories, I/O bus, and board top
 tb/         tb_dsd8.v (the supplied conformance harness, do not edit)
-            + tb_alu_example.v (a worked example of a self-checking testbench)
+            + self-checking ALU and datapath unit testbenches
 sim/        instructor-supplied reference peripheral models (UART, timer, SLOW_ECHO)
 tools/      dsd8asm.py (assembler) and dsd8sim.py (golden reference simulator)
-tests/conformance/   two verified sample programs (see its README) --
-            drop the real T01-T40 suite in here when it's distributed
+tests/conformance/   two worked examples and a directed ISA/I/O smoke program
 scripts/    run_conformance.py, run_unit_tests.py, lint.sh, install_hooks.sh
 doc/        design report / verification report / bug log templates
 .github/    CI workflows, CODEOWNERS, PR and issue templates
@@ -32,12 +30,42 @@ make test                       # every tb/tb_*.v unit testbench (needs iverilog
 make conformance                # tests/conformance/*.asm end to end
 ```
 
-`make conformance` should work out of the box against the placeholder
-RTL -- it will report both sample programs as **FAIL**, because
-`dsd8_cpu`'s `retire` output is tied low in the placeholder (nothing is
-emitted). That failure, cleanly reported with a diff, is the point:
-the certification pipeline is what you are handed on day one, not
-something you build at the end.
+Run `python scripts/run_unit_tests.py` and `python scripts/run_conformance.py`
+on Windows when Icarus Verilog and Python are on `PATH`. The equivalent
+Makefile targets are available on systems with `make`; lint additionally
+requires Verilator.
+
+## RTL lint
+
+Verilator lint statically checks the Verilog without running a simulation.
+It can catch issues such as inferred latches, width mismatches, and unused
+signals. It complements (but does not replace) the Icarus simulations.
+
+On this Windows machine, Verilator 5.050 is installed under
+`%USERPROFILE%\msys64`; its launcher and runtime are on the user `PATH`,
+and `VERILATOR_ROOT` points to its data files. Open a new terminal if
+those environment changes are not visible in an existing one. In Windows
+PowerShell, from the repository root, run:
+
+```powershell
+$rtl = Get-ChildItem rtl\*.v | ForEach-Object { $_.FullName }
+verilator --lint-only -Wall --top-module dsd8_top $rtl
+```
+
+The same check is run by `scripts/lint.sh` in a Bash environment (for
+example Git Bash or WSL). The Makefile's `lint` target invokes that script.
+
+The conformance runner executes the repository's available programs:
+the multiply and population-count worked examples plus `smoke_isa`, which
+exercises arithmetic, flags, branches, data memory, I/O, and the delayed
+SLOW_ECHO handshake. The instructor's official T01-T40 grading suite is
+not included in this repository and must be obtained separately.
+
+The data RAM has no reset port in the frozen interface, so its bytes are
+initialized to zero at simulation/FPGA initialization, as permitted by
+the specification. The board top wires switches, buttons, LEDs, and the
+seven-segment display; simulation-only UART, timer, and SLOW_ECHO models
+remain in `sim/peripherals.v` and are connected by the supplied testbench.
 
 ## The four things this template gives you that the spec describes but
 ## does not hand you the source of
@@ -57,10 +85,7 @@ something you build at the end.
    golden one and reports the first differing line, which is the whole
    verification methodology in Section 8.1 as one command.
 
-See `README` files in `tb/` and `tests/conformance/` for more detail,
-and the project doc "DSD-8 Processor -- GitHub Classroom & CI
-Certification Plan" for the instructor-facing setup (GitHub Classroom,
-branch protection, milestone tags, mark allocation).
+See the READMEs in `tb/` and `tests/conformance/` for verification details.
 
 ## Workflow, in one paragraph
 

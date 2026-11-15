@@ -10,11 +10,6 @@
 //   - the increment wraps within the 9-bit address range
 //   - when pc_en is low, pc holds its value (this is how HLT freezes it)
 //
-// The body below is an unimplemented placeholder: it compiles and
-// drives every output on every path (no inferred latches), but it does
-// not do the above yet. Replace the always block -- do not just delete
-// this comment and leave the placeholder in place.
-
 module prog_counter (
     input  wire       clk,
     input  wire       rst_n,
@@ -28,7 +23,10 @@ module prog_counter (
         if (!rst_n) begin
             pc <= 9'h000;
         end else begin
-            pc <= pc;   // TODO: implement pc_en / pc_load / increment per Section 2.5
+            if (pc_en) begin
+                if (pc_load) pc <= branch_addr;
+                else         pc <= pc + 9'h001;
+            end
         end
     end
 

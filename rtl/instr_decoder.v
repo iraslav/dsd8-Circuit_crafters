@@ -10,10 +10,6 @@
 // chooses which ones are meaningful, based on opcode. This module
 // should never look at opcode to decide what to output.
 //
-// The body below is an unimplemented placeholder (every output tied to
-// zero, so this compiles and lints clean with no inferred latches).
-// Replace each assign with the correct bit slice.
-
 module instr_decoder (
     input  wire [15:0] instr,
     output wire [3:0]  opcode,   // instr[15:12]
@@ -27,19 +23,14 @@ module instr_decoder (
     output wire        io_dir    // instr[8]: 0 = IN, 1 = OUT
 );
 
-    // TODO: replace with the bit slices given in Appendix A.
-    assign opcode = 4'h0;
-    assign rd     = 3'h0;
-    assign rs1    = 3'h0;
-    assign rs2    = 3'h0;
-    assign imm8   = 8'h00;
-    assign addr9  = 9'h000;
-    assign cond   = 3'h0;
-    assign port   = 8'h00;
-    assign io_dir = 1'b0;
-
-    // verilator lint_off UNUSEDSIGNAL
-    wire [15:0] unused_instr = instr;
-    // verilator lint_on UNUSEDSIGNAL
+    assign opcode = instr[15:12];
+    assign rd     = instr[11:9];
+    assign rs1    = instr[8:6];
+    assign rs2    = instr[5:3];
+    assign imm8   = instr[7:0];
+    assign addr9  = instr[8:0];
+    assign cond   = instr[11:9];
+    assign port   = instr[7:0];
+    assign io_dir = instr[8];
 
 endmodule

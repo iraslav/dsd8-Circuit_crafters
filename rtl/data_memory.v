@@ -8,15 +8,8 @@
 // never-written location returns 0x00, not X. Test T09 checks this
 // deliberately.
 //
-// Because this module has no reset input, "cleared by reset" has to
-// come from somewhere else -- that is a genuine design decision worth
-// recording in your design report (Section 9.3, item 4). Two
-// legitimate answers: (a) initialise the memory array so it starts
-// zeroed (works in every simulator, and on FPGA targets whose block
-// RAM honours an initial value), or (b) have control_unit sequence 256
-// writes of 0x00 through the ordinary we/addr/wdata ports before
-// fetching the first real instruction. This stub does neither yet --
-// choose one and implement it.
+// The array is initialized to zero to satisfy R16; simulation and the
+// intended FPGA targets support initial memory contents.
 
 module data_memory (
     input  wire       clk,
@@ -27,18 +20,16 @@ module data_memory (
 );
 
     reg [7:0] mem [0:255];
+    integer i;
 
-    always @(posedge clk) begin
-        // TODO: if (we) mem[addr] <= wdata;
+    initial begin
+        for (i = 0; i < 256; i = i + 1) mem[i] = 8'h00;
     end
 
-    // TODO: assign rdata = mem[addr];
-    assign rdata = 8'h00;
+    always @(posedge clk) begin
+        if (we) mem[addr] <= wdata;
+    end
 
-    // verilator lint_off UNUSEDSIGNAL
-    wire [7:0] unused_addr  = addr;
-    wire [7:0] unused_wdata = wdata;
-    wire       unused_we    = we;
-    // verilator lint_on UNUSEDSIGNAL
+    assign rdata = mem[addr];
 
 endmodule

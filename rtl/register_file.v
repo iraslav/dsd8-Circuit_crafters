@@ -11,10 +11,6 @@
 //     the next cycle onward (do not add write-through forwarding you
 //     were not asked for -- it will not match the reference)
 //
-// The body below is an unimplemented placeholder: registers always
-// reset to zero (so that much is already correct) but writes and reads
-// are not wired up yet. Replace the TODOs.
-
 module register_file (
     input  wire       clk,
     input  wire       rst_n,
@@ -36,20 +32,11 @@ module register_file (
                 regs[i] <= 8'h00;
             end
         end else begin
-            // TODO: if (we) regs[wa] <= wd;
+            if (we) regs[wa] <= wd;
         end
     end
 
-    // TODO: assign rd1 = regs[ra1]; assign rd2 = regs[ra2];
-    assign rd1 = 8'h00;
-    assign rd2 = 8'h00;
-
-    // verilator lint_off UNUSEDSIGNAL
-    wire [2:0] unused_ra1 = ra1;
-    wire [2:0] unused_ra2 = ra2;
-    wire [2:0] unused_wa  = wa;
-    wire [7:0] unused_wd  = wd;
-    wire       unused_we  = we;
-    // verilator lint_on UNUSEDSIGNAL
+    assign rd1 = regs[ra1];
+    assign rd2 = regs[ra2];
 
 endmodule

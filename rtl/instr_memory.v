@@ -13,7 +13,7 @@ module instr_memory #(
     reg [15:0] mem [0:511];
 
     initial begin
-        $readmemh(IMAGE, mem);
+        if (IMAGE != "") $readmemh(IMAGE, mem);
     end
 
     // Section 2.4 (R4): read-only, not writable by any instruction.
