@@ -1,0 +1,8 @@
+; Local deterministic coverage for the DSD-8 specification.
+LDI R1, 1
+LDI R2, 1
+CMP R1, R2
+LDI R3, 0xAA
+BEQ GOOD
+LDI R4, 0xEE
+GOOD: HLT

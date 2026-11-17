@@ -10,12 +10,12 @@ with fetch, execute, I/O-wait, and halted states.
 ```
 rtl/        processor datapath, controller, memories, I/O bus, and board top
 tb/         tb_dsd8.v (the supplied conformance harness, do not edit)
-            + self-checking ALU and datapath unit testbenches
+            + self-checking module, peripheral, and integration testbenches
 sim/        instructor-supplied reference peripheral models (UART, timer, SLOW_ECHO)
 tools/      dsd8asm.py (assembler) and dsd8sim.py (golden reference simulator)
-tests/conformance/   two worked examples and a directed ISA/I/O smoke program
+tests/conformance/   worked examples, smoke coverage, and local T01-T40 programs
 scripts/    run_conformance.py, run_unit_tests.py, lint.sh, install_hooks.sh
-doc/        design report / verification report / bug log templates
+doc/        completed design report / verification report / bug log
 .github/    CI workflows, CODEOWNERS, PR and issue templates
 ```
 
@@ -55,17 +55,17 @@ verilator --lint-only -Wall --top-module dsd8_top $rtl
 The same check is run by `scripts/lint.sh` in a Bash environment (for
 example Git Bash or WSL). The Makefile's `lint` target invokes that script.
 
-The conformance runner executes the repository's available programs:
-the multiply and population-count worked examples plus `smoke_isa`, which
-exercises arithmetic, flags, branches, data memory, I/O, and the delayed
-SLOW_ECHO handshake. The instructor's official T01-T40 grading suite is
-not included in this repository and must be obtained separately.
+The conformance runner executes the two worked examples, `smoke_isa`, and
+the local `t01_...` through `t40_...` programs. The local suite exercises
+all six specification groups, including the delayed SLOW_ECHO handshake.
+It is a transparent local implementation of the requirements, not the
+instructor's private authoritative golden suite.
 
 The data RAM has no reset port in the frozen interface, so its bytes are
 initialized to zero at simulation/FPGA initialization, as permitted by
 the specification. The board top wires switches, buttons, LEDs, and the
-seven-segment display; simulation-only UART, timer, and SLOW_ECHO models
-remain in `sim/peripherals.v` and are connected by the supplied testbench.
+seven-segment display; UART, timer, and SLOW_ECHO models are exercised by
+the simulation integration benches.
 
 ## The four things this template gives you that the spec describes but
 ## does not hand you the source of
@@ -85,7 +85,8 @@ remain in `sim/peripherals.v` and are connected by the supplied testbench.
    golden one and reports the first differing line, which is the whole
    verification methodology in Section 8.1 as one command.
 
-See the READMEs in `tb/` and `tests/conformance/` for verification details.
+See the READMEs in `tb/` and `tests/conformance/`, plus the completed
+reports in `doc/`, for verification details.
 
 ## Workflow, in one paragraph
 

@@ -28,7 +28,11 @@ module dsd8_ref_peripherals (
     output reg  [7:0] periph_rdata,
     input  wire       periph_rd,
     input  wire       periph_wr,
-    output reg        periph_ready
+    output reg         periph_ready,
+    input  wire        uart_rx_inject_valid,
+    input  wire [7:0]  uart_rx_inject_data,
+    output reg         uart_tx_valid,
+    output reg  [7:0]  uart_tx_data
 );
 
     wire request = periph_rd | periph_wr;
@@ -43,15 +47,33 @@ module dsd8_ref_peripherals (
     // ---- timer model: ports 0x30 (read count) / 0x31 (write control) ----
     reg [7:0] timer_count;
     reg       timer_enable;
+    reg [7:0] uart_rx_data;
+    reg       uart_rx_valid;
     always @(posedge clk) begin
         if (!rst_n) begin
             timer_count  <= 8'h00;
             timer_enable <= 1'b0;
-        end else if (periph_wr && periph_port == 8'h31) begin
-            timer_enable <= periph_wdata[0];
-            if (periph_wdata[1]) timer_count <= 8'h00;
-        end else if (timer_enable) begin
-            timer_count <= timer_count + 8'h01;
+            uart_rx_data <= 8'h00;
+            uart_rx_valid <= 1'b0;
+            uart_tx_valid <= 1'b0;
+            uart_tx_data <= 8'h00;
+        end else begin
+            uart_tx_valid <= 1'b0;
+            if (uart_rx_inject_valid) begin
+                uart_rx_data <= uart_rx_inject_data;
+                uart_rx_valid <= 1'b1;
+            end
+            if (periph_rd && periph_port == 8'h21) uart_rx_valid <= 1'b0;
+            if (periph_wr && periph_port == 8'h20) begin
+                uart_tx_valid <= 1'b1;
+                uart_tx_data <= periph_wdata;
+            end
+            if (periph_wr && periph_port == 8'h31) begin
+                timer_enable <= periph_wdata[0];
+                if (periph_wdata[1]) timer_count <= 8'h00;
+            end else if (timer_enable) begin
+                timer_count <= timer_count + 8'h01;
+            end
         end
     end
 
@@ -83,8 +105,11 @@ module dsd8_ref_peripherals (
         if (request) begin
             case (periph_port)
                 8'h20: periph_ready = 1'b1;                                    // UART_TX: accepted immediately
-                8'h21: begin periph_rdata = 8'h00; periph_ready = 1'b1; end    // UART_RX: never a byte waiting
-                8'h22: begin periph_rdata = 8'h00; periph_ready = 1'b1; end    // UART_STATUS: tx_busy=0, rx_valid=0
+                8'h21: begin periph_rdata = uart_rx_data; periph_ready = 1'b1; end
+                8'h22: begin
+                    periph_rdata = {6'b0, uart_rx_valid, 1'b0};
+                    periph_ready = 1'b1;
+                end
                 8'h30: begin periph_rdata = timer_count; periph_ready = 1'b1; end
                 8'h31: periph_ready = 1'b1;
                 8'h40: begin

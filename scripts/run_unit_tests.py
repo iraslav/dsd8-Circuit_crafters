@@ -21,6 +21,7 @@ import sys
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
 RTL = REPO_ROOT / "rtl"
+SIM = REPO_ROOT / "sim"
 TB_DIR = REPO_ROOT / "tb"
 BUILD_DIR = REPO_ROOT / "build" / "unit"
 
@@ -44,12 +45,13 @@ def main():
             sys.exit(3)
 
     rtl_sources = [str(p) for p in sorted(RTL.glob("*.v"))]
+    sim_sources = [str(p) for p in sorted(SIM.glob("*.v"))]
 
     n_pass = 0
     results = []
     for tb_path in tb_files:
         sim_bin = BUILD_DIR / (tb_path.stem + ".vvp")
-        compile_cmd = ["iverilog", "-g2005", "-o", str(sim_bin)] + rtl_sources + [str(tb_path)]
+        compile_cmd = ["iverilog", "-g2005", "-o", str(sim_bin)] + rtl_sources + sim_sources + [str(tb_path)]
         r = run(compile_cmd)
         if r.returncode != 0:
             results.append((tb_path.name, "ERROR", f"compile failed:\n{r.stdout}{r.stderr}"))
@@ -57,7 +59,9 @@ def main():
 
         r = run(["vvp", str(sim_bin)])
         output = r.stdout + r.stderr
-        if "TESTBENCH: PASS" in output:
+        if r.returncode != 0:
+            results.append((tb_path.name, "ERROR", f"simulation failed:\n{output}"))
+        elif "TESTBENCH: PASS" in output:
             results.append((tb_path.name, "PASS", None))
             n_pass += 1
         elif "TESTBENCH: FAIL" in output:

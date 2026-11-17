@@ -165,6 +165,17 @@ def main():
     print(f"{n_pass} / {len(results)} passed")
     print()
 
+    report_path = BUILD_DIR / "CONFORMANCE_REPORT.txt"
+    with report_path.open("w", encoding="utf-8") as report:
+        report.write("DSD-8 local conformance report\n")
+        report.write("=============================\n")
+        for name, status, detail in results:
+            report.write(f"{name}: {status}\n")
+            if detail:
+                report.write(detail + "\n")
+        report.write(f"\n{n_pass} / {len(results)} passed\n")
+    print(f"report: {report_path}")
+
     sys.exit(0 if n_pass == len(results) else 1)
 
 

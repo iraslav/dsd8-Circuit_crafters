@@ -46,6 +46,8 @@ module tb_dsd8;
     // ---- io_bus <-> reference peripherals (sim/peripherals.v) ----
     wire [7:0] periph_port, periph_wdata, periph_rdata;
     wire       periph_rd, periph_wr, periph_ready;
+    wire uart_tx_valid;
+    wire [7:0] uart_tx_data;
 
     // ---- status / trace ----
     wire        halted;
@@ -141,7 +143,11 @@ module tb_dsd8;
         .periph_rdata (periph_rdata),
         .periph_rd    (periph_rd),
         .periph_wr    (periph_wr),
-        .periph_ready (periph_ready)
+        .periph_ready (periph_ready),
+        .uart_rx_inject_valid (1'b0),
+        .uart_rx_inject_data  (8'h00),
+        .uart_tx_valid        (uart_tx_valid),
+        .uart_tx_data         (uart_tx_data)
     );
 
     // ---- trace writer: exactly the fragment from Section 8.3 ----

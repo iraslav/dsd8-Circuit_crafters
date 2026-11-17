@@ -35,7 +35,7 @@ conformance job from informational to authoritative for that ref (see
 
 ## Keeping the bug log honest
 
-Every bug gets an entry in `doc/bug_log_template.md` (or a GitHub
+Every bug gets an entry in `doc/bug_log.md` (or a GitHub
 issue from `.github/ISSUE_TEMPLATE/bug_report.md`, later copied into
 the log) with an honest `found by` field. This is graded, and it is
 also the data your verification report's "unit tests are cheap,
